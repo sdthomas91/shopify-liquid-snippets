@@ -1,0 +1,457 @@
+{% comment %}
+Step-by-step Colour Builder with Conditional Logic:
+- Radio buttons for Root Stretch
+- Root Colour Picker using separate metaobject (custom.root_colour) - can be adapted to your niche
+- Blend Type with conditional display
+- Custom Colour Swatch Selector (with up to 3 selections max)
+- If NO root is selected, minimum of 2 colours must be chosen
+- If root IS selected, user may select 1 to 3 colours
+- Step transitions with Back buttons
+- T + root colour is only added if root stretch !=None
+- Step 2 is skipped entirely if Root Stretch is "None"
+- Final colour output is injected into line item via properties[Colour Code]
+{% endcomment %}
+
+<!-- CSS Styles -->
+<style>
+  .builder-step {
+    margin-top: 2.5rem;
+  }
+  .h6 {
+    margin-bottom: 2rem;
+  }
+  .xo-field-radio-group {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .colour-swatch-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+  }
+  .colour-swatch {
+    --swatch-size: 4.5rem;
+    width: var(--swatch-size);
+    height: var(--swatch-size);
+    background-size: cover;
+    background-position: center;
+    border-radius: 50%;
+    border: 1px solid #ccc;
+    cursor: pointer;
+    transition: transform 0.2s, border 0.2s;
+    display: block;
+  }
+  .colour-swatch.selected {
+    z-index: 2;
+    border: 2px solid #f38f9a;
+    transform: scale(1.15);
+  }
+  .colour-label {
+    font-size: 0.75rem;
+    color: #444;
+    text-align: center;
+    display: none;
+  }
+  .builder-step {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.5s ease-in-out, visibility 0.5s ease-in-out;
+    position: absolute;
+    width: 100%;
+  }
+  .builder-step.active {
+    opacity: 1;
+    visibility: visible;
+    position: relative;
+  }
+.next-step, .back-step {
+    max-width: 30%;
+    padding: 1rem 1.5rem;
+    margin-top: 2rem;
+    margin-right: 2rem;
+    display: inline;
+border-radius: 5rem;
+  }
+  .next-step:hover {
+    color: #f38f9a;
+  }
+  .back-step:hover {
+    color: #fff;
+  }
+  .colour-selected-list {
+    list-style: none;
+    padding-left: 0;
+    margin-bottom: 1.5rem;
+    font-size: 1.05rem;
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+  .colour-selected-list li {
+    padding: 1rem 1.5rem;
+    background: #efefef;
+    border-radius: 5rem;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .colour-selected-list li.filled {
+    background: #f38f9a;
+    color: #fff;
+  }
+  .overlay-label {
+    z-index: 1;
+    position: absolute;
+    top: 0;
+    width: 4.5rem;
+    height: 4.5rem;
+    background: rgba(20, 20, 20, 0.25);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    border-radius: 50%;
+    text-align: center;
+    transition: opacity 0.2s;
+    pointer-events: none;
+  }
+.selected-colour-span {
+font-size: 1.2rem;
+}
+
+  @media (min-width: 1025px) {
+    .colour-swatch-wrapper:hover .overlay-label {
+      opacity: 1;
+    }
+    .overlay-label {
+      opacity: 0.8;
+    }
+  }
+
+  @media (max-width: 1024px) {
+    .overlay-label {
+      opacity: 1;
+    }
+    .colour-swatch.selected + .overlay-label {
+    opacity: 0.5;
+}
+  }
+  .custom-colour-builder .colour-swatches {
+    display: grid !important;
+    grid-template-columns: repeat(6, 1fr) !important;
+    gap: 0.6rem !important;
+    max-width: 100% !important;
+  }
+  .custom-colour-builder .colour-swatch {
+    --swatch-size: 4.5rem;
+    width: var(--swatch-size) !important;
+    height: var(--swatch-size) !important;
+    background-size: cover !important;
+    background-position: center !important;
+    border-radius: 50% !important;
+    border: 1px solid rgba(0,0,0,0.1) !important;
+    transition: transform 0.2s ease, border 0.2s ease !important;
+    position: relative !important;
+  }
+.custom-colour-builder .colour-swatch.selected {
+    z-index: 1;
+    border: 2px solid #f38f9a !important;
+    transform: scale(1.15) !important;
+  }
+@media (min-width: 786px) {
+.custom-colour-builder .colour-swatches {
+    grid-template-columns: repeat(6, 1fr) !important;
+  }
+.custom-colour-builder .colour-swatch {
+    --swatch-size: 5.5rem;
+}
+.overlay-label {
+width: 5.5rem;
+height: 5.5rem;
+}
+}
+</style>
+
+<!-- CORE HTML -->
+<div id="custom-colour-builder" class="custom-colour-builder">
+  <!-- Step 1: Root Stretch -->
+  <div class="builder-step" id="step-1">
+    <p class="h6">Step 1: Root Stretch</p>
+    <div class="xo-field-radio-group" role="radiogroup" aria-label="Root Stretch Options">
+      {% assign root_options = 'None,2",3"' | split: ',' %}
+      {% for option in root_options %}
+      <label class="xo-field-radio-3">
+        <input class="xo-field-radio-3__input root-option" type="radio" name="root-stretch" value="{{ option }}">
+        <span class="xo-field-radio-3__item"><span class="xo-field-radio-3__icon"></span></span>
+        <span class="xo-field-radio-3__label"><span>{{ option }}</span></span>
+      </label>
+      {% endfor %}
+    </div>
+    <button class="xo-btn xo-btn--radius xo-btn--primary xo-btn--animation xo-btn--lg xo-btn--fade xo-btn--block next-step" id="step-1-next" data-builder-button>Next</button>
+  </div>
+
+  <!-- Step 2: Root Colour -->
+  <div class="builder-step" id="step-2">
+    <p class="h6">Step 2: Root Colour</p>
+    {% comment %} Root Colour Swatch options pulled from custom.root_colour metaobject {% endcomment %}
+    <div class="colour-swatches">
+      {% assign root_colours = product.metafields.custom.root_colour.value %}
+      {% for root in root_colours %}
+      {% assign title = root.label | default: 'Unnamed Colour' %}
+      <div class="colour-swatch-wrapper">
+        <label class="colour-swatch root" data-title="{{ title }}" style="background-image: url('{{ root.image | image_url: width: 200 }}');">
+          <input type="radio" name="root-colour" value="{{ title }}" style="display:none;">
+        </label>
+        <span class="colour-label">{{ title }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    <button class="xo-btn xo-btn--radius xo-btn--secondary xo-btn--animation xo-btn--md xo-btn--fade xo-btn--block back-step" data-back="step-1">Back</button>
+    <button class="xo-btn xo-btn--radius xo-btn--primary xo-btn--animation xo-btn--lg xo-btn--fade xo-btn--block next-step" data-next="step-3">Next</button>
+  </div>
+
+  <!-- Step 3: Blend Type -->
+  <div class="builder-step" id="step-3">
+    <p class="h6">Step 3: Blend Type</p>
+    <div class="xo-field-radio-group">
+      <label class="xo-field-radio-3">
+        <input class="xo-field-radio-3__input" type="radio" name="blend-type" value="Single">
+        <span class="xo-field-radio-3__item"><span class="xo-field-radio-3__icon"></span></span>
+        <span class="xo-field-radio-3__label"><span>Single Colour</span></span>
+      </label>
+      <label class="xo-field-radio-3">
+        <input class="xo-field-radio-3__input" type="radio" name="blend-type" value="Piano">
+        <span class="xo-field-radio-3__item"><span class="xo-field-radio-3__icon"></span></span>
+        <span class="xo-field-radio-3__label"><span>Piano</span></span>
+      </label>
+      <label class="xo-field-radio-3">
+        <input class="xo-field-radio-3__input" type="radio" name="blend-type" value="Mix">
+        <span class="xo-field-radio-3__item"><span class="xo-field-radio-3__icon"></span></span>
+        <span class="xo-field-radio-3__label"><span>Mix</span></span>
+      </label>
+    </div>
+    <button class="xo-btn xo-btn--radius xo-btn--secondary xo-btn--animation xo-btn--md xo-btn--fade xo-btn--block back-step" data-back="step-2">Back</button>
+    <button class="xo-btn xo-btn--radius xo-btn--primary xo-btn--animation xo-btn--lg xo-btn--fade xo-btn--block next-step" data-next="step-4">Next</button>
+  </div>
+
+  <!-- Step 4: Final Colours -->
+  <div class="builder-step" id="step-4">
+    <p class="h6">Step 4: Select Colours</p>
+    <ul id="colour-selected-list" class="colour-selected-list">
+      <li class="color-slot-item">Colour 1: <span id="colour-slot-1">—</span></li>
+      <li class="color-slot-item">Colour 2: <span id="colour-slot-2">—</span></li>
+      <li class="color-slot-item">Colour 3: <span id="colour-slot-3">—</span></li>
+    </ul>
+    <div class="colour-swatches">
+      {% assign patterns = product.metafields.custom.colour.value %}
+      {% for pattern in patterns %}
+      {% assign title = pattern.label | default: 'Unnamed Colour' %}
+      <div class="colour-swatch-wrapper">
+        <label class="colour-swatch final" data-title="{{ title }}" style="background-image: url('{{ pattern.image | image_url: width: 200 }}');">
+          <input type="checkbox" value="{{ title }}" name="final-colours" style="display:none;">
+        </label>
+        <span class="colour-label">{{ title }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    <input type="hidden" name="properties[Colour Code]" id="final-colour-code">
+    <div id="summary" style="margin-top:2rem; display:none;">
+      <p><strong>Final Colour Code:</strong> <span id="colour-code-output">—</span></p>
+    </div>
+    <button class="xo-btn xo-btn--radius xo-btn--secondary xo-btn--animation xo-btn--md xo-btn--fade xo-btn--block back-step" data-back="step-3">Back</button>
+  </div>
+</div>
+
+<!-- JS BLOCK -->
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const steps = document.querySelectorAll('.builder-step');
+    const step3 = document.getElementById('step-3');
+    const singleColourRadio = step3.querySelector('input[value="Single"]')?.closest('.xo-field-radio-3');
+
+    steps.forEach(step => step.classList.remove('active'));
+    steps[0].classList.add('active');
+
+    const step1Next = document.getElementById('step-1-next');
+    let selectedRootValue = '';
+    let rootSelected = false;
+
+    step1Next.addEventListener('click', () => {
+      const selected = document.querySelector('input[name="root-stretch"]:checked');
+      if (!selected) return alert('Please select a root stretch option.');
+      selectedRootValue = selected.value;
+      rootSelected = selected.value !== 'None';
+
+      if (singleColourRadio) singleColourRadio.style.display = rootSelected ? 'inline-flex' : 'none';
+
+      document.querySelectorAll('.colour-swatch.final input:checked').forEach(el => el.checked = false);
+      document.querySelectorAll('.colour-swatch.final').forEach(el => el.classList.remove('selected'));
+      document.querySelectorAll('input[name="blend-type"]').forEach(input => input.checked = false);
+
+      document.getElementById('colour-code-output').textContent = '—';
+      document.getElementById('final-colour-code').value = '';
+      document.getElementById('summary').style.display = 'none';
+
+      const slots = [
+        document.getElementById('colour-slot-1'),
+        document.getElementById('colour-slot-2'),
+        document.getElementById('colour-slot-3')
+      ];
+      slots.forEach(slot => {
+        slot.textContent = '—';
+        slot.closest('.color-slot-item').classList.remove('filled');
+      });
+
+      steps.forEach(step => step.classList.remove('active'));
+      document.getElementById(rootSelected ? 'step-2' : 'step-3').classList.add('active');
+    });
+
+    document.querySelectorAll('.next-step').forEach(btn => {
+      if (btn.id !== 'step-1-next') {
+        btn.addEventListener('click', () => {
+          const next = btn.dataset.next;
+          steps.forEach(step => step.classList.remove('active'));
+          document.getElementById(next).classList.add('active');
+        });
+      }
+    });
+
+    document.querySelectorAll('.back-step').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const back = btn.dataset.back;
+        steps.forEach(step => step.classList.remove('active'));
+        document.getElementById(back).classList.add('active');
+
+        if (back === 'step-3') {
+          document.querySelectorAll('input[name="blend-type"]').forEach(input => input.checked = false);
+          document.querySelectorAll('.colour-swatch.final input:checked').forEach(cb => cb.checked = false);
+          document.querySelectorAll('.colour-swatch.final').forEach(el => el.classList.remove('selected'));
+          document.getElementById('colour-code-output').textContent = '—';
+          document.getElementById('final-colour-code').value = '';
+          document.getElementById('summary').style.display = 'none';
+
+          const slots = [
+            document.getElementById('colour-slot-1'),
+            document.getElementById('colour-slot-2'),
+            document.getElementById('colour-slot-3')
+          ];
+          slots.forEach(slot => {
+            slot.textContent = '—';
+            slot.closest('.color-slot-item').classList.remove('filled');
+          });
+        }
+      });
+    });
+
+    document.querySelectorAll('input[name="blend-type"]').forEach(input => {
+      input.addEventListener('change', () => {
+        document.querySelectorAll('input[name="blend-type"]').forEach(other => {
+          if (other !== input) other.checked = false;
+        });
+
+        document.querySelectorAll('.colour-swatch.final input:checked').forEach(cb => cb.checked = false);
+        document.querySelectorAll('.colour-swatch.final').forEach(el => el.classList.remove('selected'));
+
+        document.getElementById('colour-code-output').textContent = '—';
+        document.getElementById('final-colour-code').value = '';
+        document.getElementById('summary').style.display = 'none';
+
+        const slots = [
+          document.getElementById('colour-slot-1'),
+          document.getElementById('colour-slot-2'),
+          document.getElementById('colour-slot-3')
+        ];
+        slots.forEach(slot => {
+          slot.textContent = '—';
+          slot.closest('.color-slot-item').classList.remove('filled');
+        });
+      });
+    });
+
+    const finalInput = document.getElementById('final-colour-code');
+    const output = document.getElementById('colour-code-output');
+
+    document.querySelectorAll('input[name="root-colour"]').forEach(rb => {
+      rb.addEventListener('change', () => {
+        document.querySelectorAll('.colour-swatch.root').forEach(sw => sw.classList.remove('selected'));
+        if (rb.checked) rb.closest('.colour-swatch').classList.add('selected');
+      });
+    });
+
+    document.querySelectorAll('.colour-swatch.final input').forEach(cb => {
+      cb.addEventListener('change', () => {
+        const selected = Array.from(document.querySelectorAll('.colour-swatch.final input:checked'));
+        const blendType = document.querySelector('input[name="blend-type"]:checked')?.value;
+
+        if (blendType === 'Single' && selected.length > 1) {
+          cb.checked = false;
+          alert('Only 1 colour can be selected for Single Colour.');
+          return;
+        }
+
+        document.querySelectorAll('.colour-swatch.final').forEach(el => {
+          const input = el.querySelector('input');
+          el.classList.toggle('selected', input.checked);
+        });
+        
+        let rootLen = document.querySelector('input[name="root-stretch"]:checked')?.value || 'None';
+        let rawRoot = rootLen !== 'None' ? (document.querySelector('input[name="root-colour"]:checked')?.value || '') : '';
+        let root = rootLen !== 'None' && rawRoot ? rawRoot.replace(/^#/, '').replace(/^0/, '') : '';
+        let blend = blendType;
+        let rootPrefix = rootLen !== 'None' && root ? 'T' + root : '';
+        let colours = selected.map(cb => cb.value.replace(/^#/, '').replace(/^0/, '')).join('/');
+        let code;
+
+        if (blend === 'Single') {
+          code = `#${rootPrefix}/${colours}${rootLen !== 'None' ? ' | ' + rootLen + ' ″ Root' : ''}`;
+        } else {
+          let blendPrefix = blend?.charAt(0);
+          code = `#${rootPrefix}${blendPrefix}${colours}${rootLen !== 'None' ? ' | ' + rootLen + ' ″ Root' : ''}`;
+        }
+
+        finalInput.value = code;
+        output.textContent = code;
+        document.getElementById('summary').style.display = 'block';
+
+        const slots = [
+          document.getElementById('colour-slot-1'),
+          document.getElementById('colour-slot-2'),
+          document.getElementById('colour-slot-3')
+        ];
+
+        slots.forEach((slot, index) => {
+          const li = slot.closest('.color-slot-item');
+          if (selected[index]) {
+            slot.textContent = selected[index].getAttribute('value');
+            li.classList.add('filled');
+          } else {
+            slot.textContent = '—';
+            li.classList.remove('filled');
+          }
+        });
+      });
+    });
+
+    document.querySelectorAll('.colour-swatch-wrapper').forEach(wrapper => {
+      const label = wrapper.querySelector('label');
+      const title = label.getAttribute('data-title');
+      const overlay = document.createElement('span');
+      overlay.classList.add('overlay-label');
+      overlay.setAttribute('aria-label', 'Colour ' + title.replace(/^#/, ''));
+      overlay.textContent = title.replace(/^#/, '');
+      label.insertAdjacentElement('afterend', overlay);
+    });
+  });
+</script>
+
+{% comment %}
+This section dynamically generates a final Colour Code for the product,
+based on multiple conditional user selections.
+
+The output is stored in:
+  <input type="hidden" name="properties[Colour Code]">
+
+This value is submitted with the cart item for order-level use.
+{% endcomment %}
