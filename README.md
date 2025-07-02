@@ -3,7 +3,7 @@
 A curated set of Shopify Liquid snippets used across real-world projects like [Blush+Wren](https://blushwren.com) and [Maysama](https://maysama.com).  
 These snippets demonstrate custom section builds, advanced metafield logic, and LLMO-friendly schema integration for Shopify product pages.
 
-Jump to → [🔧 Custom Colour Builder](#custom-colour-builder) • [🧠 LLMO Schema FAQ](#llmo-schema-faq)
+Jump to → [Custom Colour Builder](#custom-colour-builder) • [LLMO Schema FAQ](#llmo-schema-faq) • 
 
 ---
 
@@ -39,6 +39,11 @@ Custom JSON-LD schema markup for Shopify FAQ blocks, optimised for Google rich r
 - Structured to be lean, compliant, and scalable
 
 ---
+
+#### Coming Soon
+
+- Custom Mega Menu with Images designed for Shopify 2.0
+
 
 ## 📄 License
 
