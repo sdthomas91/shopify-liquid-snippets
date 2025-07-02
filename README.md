@@ -40,6 +40,17 @@ Custom JSON-LD schema markup for Shopify FAQ blocks, optimised for Google rich r
 
 ---
 
+### Reusable WhatsApp Float (w/ Animation)
+`3. whatsapp-float.liquid
+
+Custom reusable whatsapp float to be used across any shopify store and increase customer conversation and conversion.
+
+**Highlights:**
+- Fully customisable in theme editor
+- Optional pre-populated message on click-through
+- Enable/Disable on checkout pages for enhanced UX control
+
+
 #### Coming Soon
 
 - Custom Mega Menu with Images designed for Shopify 2.0
