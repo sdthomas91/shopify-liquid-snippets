@@ -79,7 +79,7 @@ Metafield definition → product.custom.faqs (type: List of Metaobject, definiti
 <!-- CORE HTML -->
 <section class="product-faqs-section">
   <div class="faq-wrapper">
-    <h2 class="faq-heading">{{ product.metafields.custom.method }} FAQ's</h2>
+    <h2 class="faq-heading">{{ product.title }} FAQ's</h2>
     <div class="faq-list">
       {% for faq in product.metafields.custom.faqs.value %}
         <div class="faq-item">
