@@ -1,0 +1,221 @@
+{%- comment -%}
+  WhatsApp Floating Button Snippet
+  How to Use : 
+  1. Create new snippet and name 'whatsapp-float.liquid' - paste the below code
+  2. Location settings-schema.json and add the schema code (ideally around brand information)
+  3. Before </body> in theme.liquid render using {% render 'whatsapp-float' %}
+  Settings configured in theme editor under "WhatsApp Settings"
+{%- endcomment -%}
+
+{% comment %}
+whatsapp-float.liquid
+{% endcomment %}
+{%- if settings.whatsapp_phone_number != blank -%}
+  <style>
+    /* WhatsApp Floating Button Styles */
+    .whatsapp-float {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4);
+      cursor: pointer;
+      z-index: 1000;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      border: none;
+      outline: none;
+    }
+
+    .whatsapp-float:hover {
+      transform: translateY(-3px) scale(1.05);
+      box-shadow: 0 6px 20px rgba(37, 211, 102, 0.6);
+    }
+
+    .whatsapp-float:active {
+      transform: translateY(-1px) scale(1.02);
+    }
+
+    /* WhatsApp SVG Icon */
+    .whatsapp-icon {
+      width: 32px;
+      height: 32px;
+      fill: white;
+    }
+
+    /* Tooltip */
+    .whatsapp-tooltip {
+      position: absolute;
+      right: 70px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: #333;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: var(--font-body-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+      white-space: nowrap;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+      pointer-events: none;
+    }
+
+    .whatsapp-tooltip::after {
+      content: '';
+      position: absolute;
+      right: -6px;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 6px solid transparent;
+      border-left-color: #333;
+    }
+
+    .whatsapp-float:hover .whatsapp-tooltip {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(-50%) translateX(-5px);
+    }
+
+    /* Pulse animation for attention */
+    .whatsapp-float::before {
+      content: '';
+      position: absolute;
+      top: -4px;
+      left: -4px;
+      right: -4px;
+      bottom: -4px;
+      border-radius: 50%;
+      background: rgba(37, 211, 102, 0.3);
+      animation: whatsapp-pulse 2s infinite;
+      z-index: -1;
+    }
+
+    @keyframes whatsapp-pulse {
+      0% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      100% {
+        transform: scale(1.3);
+        opacity: 0;
+      }
+    }
+
+    /* Mobile responsiveness */
+    @media (max-width: 768px) {
+      .whatsapp-float {
+        width: 56px;
+        height: 56px;
+        bottom: 16px;
+        right: 16px;
+      }
+
+      .whatsapp-icon {
+        width: 28px;
+        height: 28px;
+      }
+
+      .whatsapp-tooltip {
+        display: none; /* Hide tooltip on mobile */
+      }
+    }
+
+    /* Hide on specific pages if needed */
+    {%- if settings.whatsapp_hide_on_checkout -%}
+      .checkout .whatsapp-float {
+        display: none;
+      }
+    {%- endif -%}
+  </style>
+
+  {%- liquid
+    assign phone_number = settings.whatsapp_phone_number | replace: ' ', '' | replace: '+', '' | replace: '-', '' | replace: '(', '' | replace: ')', ''
+    assign default_message = settings.whatsapp_default_message | default: 'Hi! I\'m interested in learning more about your products.'
+    assign tooltip_text = settings.whatsapp_tooltip_text | default: 'Chat with us!'
+    assign encoded_message = default_message | url_encode
+  -%}
+
+  <!-- WhatsApp Floating Button -->
+  <a
+    href="https://wa.me/{{ phone_number }}?text={{ encoded_message }}"
+    class="whatsapp-float"
+    target="_blank"
+    rel="noopener"
+    aria-label="Contact us on WhatsApp"
+  >
+    <div class="whatsapp-tooltip">{{ tooltip_text }}</div>
+
+    <!-- WhatsApp SVG Icon -->
+    <svg class="whatsapp-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.893 3.488"/>
+    </svg>
+  </a>
+  {% comment %}
+    Add Analytics Tracking : Optional
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const whatsappButton = document.querySelector('.whatsapp-float');
+        if (whatsappButton) {
+          whatsappButton.addEventListener('click', function() {
+            // Track WhatsApp clicks - add your analytics code here
+            if (typeof gtag !== 'undefined') {
+              gtag('event', 'click', {
+                event_category: 'WhatsApp',
+                event_label: 'Floating Button'
+              });
+            }
+          });
+        }
+      });
+    </script>
+  {% endcomment %}
+{%- endif -%}
+
+{% comment %}
+settings_schema.json code
+{% endcomment %}
+{
+    "name": "WhatsApp Settings",
+    "settings": [
+      {
+        "type": "header",
+        "content": "WhatsApp Floating Button"
+      },
+      {
+        "type": "text",
+        "id": "whatsapp_phone_number",
+        "label": "WhatsApp Phone Number",
+        "info": "Include country code (e.g., 1234567890 or +1 234 567 8900)",
+        "placeholder": "1234567890"
+      },
+      {
+        "type": "textarea",
+        "id": "whatsapp_default_message",
+        "label": "Default Message",
+        "default": "Hi! I'm interested in learning more about your products.",
+        "info": "This message will be pre-filled when customers click the WhatsApp button"
+      },
+      {
+        "type": "text",
+        "id": "whatsapp_tooltip_text",
+        "label": "Tooltip Text",
+        "default": "Chat with us!",
+        "info": "Text shown when hovering over the button (desktop only)"
+      },
+      {
+        "type": "checkbox",
+        "id": "whatsapp_hide_on_checkout",
+        "label": "Hide on checkout pages",
+        "default": true,
+        "info": "Recommended to avoid distracting customers during checkout"
+      }
+    ]
+  },
